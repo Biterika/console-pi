@@ -352,16 +352,27 @@
       // Desktop list
       const list = document.getElementById("sessionsList");
       if (!sessions.length) { list.innerHTML = "<div class=\"no-sessions\">Нет сессий</div>"; }
-      else { list.innerHTML = sessions.map(s => `<div class="session-item ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}')"><span>${s.name}</span><button class="session-close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</button></div>`).join(""); }
+      else { list.innerHTML = sessions.map(s => `<div class="session-item ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}')" ondblclick="event.stopPropagation();renameSession('${s.id}')"><span>${s.name}</span><button class="session-close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</button></div>`).join(""); }
       
       // Mobile bar
       const bar = document.getElementById("sessionsBar");
-      bar.innerHTML = sessions.map(s => `<div class="session-chip ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}')"><span>${s.name}</span><span class="close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</span></div>`).join("") + `<button class="add-session-btn" onclick="createSession()">+ Новая</button>`;
+      bar.innerHTML = sessions.map(s => `<div class="session-chip ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}')" ondblclick="event.stopPropagation();renameSession('${s.id}')"><span>${s.name}</span><span class="close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</span></div>`).join("") + `<button class="add-session-btn" onclick="createSession()">+ Новая</button>`;
     }
 
     async function createSession() {
-      const res = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      const name = prompt("Имя сессии:", "Агент " + (sessions.length + 1));
+      if (name === null) return;
+      const res = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
       if (res.ok) { const sess = await res.json(); sessions.push(sess); switchSession(sess.id); }
+    }
+
+    async function renameSession(id) {
+      const session = sessions.find(s => s.id === id);
+      if (!session) return;
+      const name = prompt("Новое имя:", session.name);
+      if (!name || name === session.name) return;
+      const res = await fetch(`/api/sessions/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+      if (res.ok) { session.name = name; renderSessions(); }
     }
 
     async function deleteSession(id) {

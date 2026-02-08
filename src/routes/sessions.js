@@ -104,3 +104,26 @@ router.delete('/:id', requireAuth, validateSessionId, async (req, res) => {
 });
 
 module.exports = router;
+
+/**
+ * PATCH /api/sessions/:id - Rename session
+ */
+router.patch("/:id", requireAuth, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Name required" });
+    
+    const [rows] = await pool.execute(
+      "SELECT * FROM sessions WHERE id = ? AND user_id = ?",
+      [req.params.id, req.authUser.id]
+    );
+    
+    if (!rows[0]) return res.status(404).json({ error: "Session not found" });
+    
+    await pool.execute("UPDATE sessions SET name = ? WHERE id = ?", [name, req.params.id]);
+    
+    res.json({ ok: true, name });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to rename" });
+  }
+});
