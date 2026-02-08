@@ -59,7 +59,6 @@ function isContainerRunning(containerName) {
 async function ensureContainerRunning(containerName) {
   if (!isContainerRunning(containerName)) {
     logger.info(`Starting container ${containerName}...`);
-    execSync(`lxc start ${containerName}`, { timeout: 30000 });
     await new Promise(r => setTimeout(r, 3000));
   }
 }

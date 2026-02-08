@@ -1,5 +1,5 @@
-const pool = require('../db/pool');
-const { parseCookies } = require('../utils/helpers');
+const pool = require("../db/pool");
+const { parseCookies } = require("../utils/helpers");
 
 /**
  * Get user by auth token
@@ -18,21 +18,36 @@ async function getUserByToken(token) {
 }
 
 /**
+ * Extract token from request (cookies or Authorization header)
+ */
+function extractToken(req) {
+  // Check Authorization header first
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authHeader.substring(7);
+  }
+  
+  // Fallback to cookies
+  const cookies = parseCookies(req.headers.cookie);
+  return cookies.session || null;
+}
+
+/**
  * Middleware: require authenticated user
  */
 async function requireAuth(req, res, next) {
   try {
-    const cookies = parseCookies(req.headers.cookie);
-    const user = await getUserByToken(cookies.session);
+    const token = extractToken(req);
+    const user = await getUserByToken(token);
     
     if (!user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
     
     req.authUser = user;
     next();
   } catch (err) {
-    res.status(500).json({ error: 'Authentication error' });
+    res.status(500).json({ error: "Authentication error" });
   }
 }
 
@@ -41,21 +56,21 @@ async function requireAuth(req, res, next) {
  */
 async function requireAdmin(req, res, next) {
   try {
-    const cookies = parseCookies(req.headers.cookie);
-    const user = await getUserByToken(cookies.session);
+    const token = extractToken(req);
+    const user = await getUserByToken(token);
     
     if (!user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
     
     if (!user.is_admin) {
-      return res.status(403).json({ error: 'Forbidden' });
+      return res.status(403).json({ error: "Forbidden" });
     }
     
     req.authUser = user;
     next();
   } catch (err) {
-    res.status(500).json({ error: 'Authentication error' });
+    res.status(500).json({ error: "Authentication error" });
   }
 }
 
