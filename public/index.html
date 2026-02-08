@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Beebro</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; height: 100vh; overflow: hidden; }
+    
+    .header { background: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; height: 56px; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo { font-size: 22px; font-weight: bold; color: #007AFF; }
+    .burger { display: none; background: none; border: none; padding: 8px; cursor: pointer; }
+    .burger svg { width: 24px; height: 24px; }
+    .user-info { display: flex; align-items: center; gap: 12px; }
+    
+    .btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #d0d0d0; background: #fff; color: #333; cursor: pointer; font-size: 14px; white-space: nowrap; }
+    .btn:hover { background: #f0f0f0; }
+    .btn-primary { background: #007AFF; border-color: #007AFF; color: #fff; }
+    .btn-primary:hover { background: #0066e0; }
+    .btn-danger { background: #dc3545; border-color: #dc3545; color: #fff; }
+    .btn-small { padding: 4px 8px; font-size: 12px; }
+    
+    .login-container { display: flex; justify-content: center; align-items: center; height: calc(100vh - 56px); padding: 16px; }
+    .login-box { background: #fff; padding: 32px; border-radius: 12px; border: 1px solid #e0e0e0; width: 100%; max-width: 320px; }
+    .login-box h2 { margin-bottom: 24px; text-align: center; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 6px; color: #666; font-size: 14px; }
+    .form-group input { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #d0d0d0; font-size: 16px; }
+    
+    .tabs { display: flex; background: #fff; border-bottom: 1px solid #e0e0e0; overflow-x: auto; }
+    .tab { padding: 12px 16px; cursor: pointer; border-bottom: 2px solid transparent; color: #666; white-space: nowrap; flex-shrink: 0; }
+    .tab:hover { color: #333; }
+    .tab.active { color: #007AFF; border-bottom-color: #007AFF; }
+    
+    .main-container { display: flex; height: calc(100vh - 110px); position: relative; }
+    
+    /* Sessions panel */
+    .sessions-panel { width: 220px; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; flex-shrink: 0; }
+    .sessions-header { padding: 12px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
+    .sessions-header h3 { font-size: 13px; color: #666; }
+    .sessions-list { flex: 1; overflow-y: auto; }
+    .session-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: pointer; font-size: 13px; color: #666; border-bottom: 1px solid #f0f0f0; }
+    .session-item:hover { background: #f5f5f5; }
+    .session-item.active { background: #e8f4fc; color: #007AFF; border-left: 3px solid #007AFF; }
+    .session-close { opacity: 0; background: none; border: none; color: #999; cursor: pointer; font-size: 18px; padding: 0 4px; }
+    .session-item:hover .session-close { opacity: 1; }
+    .no-sessions { padding: 20px; text-align: center; color: #999; font-size: 13px; }
+    
+    .terminal-wrapper { flex: 1; display: flex; flex-direction: column; background: #1e1e1e; min-width: 0; }
+    .terminal-container { flex: 1; overflow: hidden; }
+    .status-bar { padding: 6px 12px; background: #fff; border-top: 1px solid #e0e0e0; font-size: 12px; color: #666; display: flex; align-items: center; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #999; margin-right: 8px; flex-shrink: 0; }
+    .status-dot.connected { background: #28a745; }
+    
+    /* Files */
+    .files-panel { height: calc(100vh - 110px); overflow-y: auto; padding: 16px; }
+    .files-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+    .files-path { font-family: monospace; background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e0e0e0; font-size: 13px; word-break: break-all; }
+    .files-buttons { display: flex; gap: 8px; }
+    .files-list { display: flex; flex-direction: column; gap: 8px; }
+    .file-item { display: flex; align-items: center; padding: 12px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; gap: 12px; }
+    .file-item:hover { border-color: #007AFF; }
+    .file-icon { font-size: 20px; flex-shrink: 0; }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name { font-weight: 500; word-break: break-all; }
+    .file-meta { font-size: 12px; color: #999; }
+    
+    /* Admin */
+    .admin-panel { display: flex; height: calc(100vh - 110px); }
+    .admin-nav { width: 200px; background: #fff; border-right: 1px solid #e0e0e0; padding: 12px 0; flex-shrink: 0; }
+    .admin-nav-item { display: flex; align-items: center; padding: 10px 16px; cursor: pointer; color: #666; font-size: 14px; gap: 10px; }
+    .admin-nav-item:hover { background: #f5f5f5; }
+    .admin-nav-item.active { background: #e8f4fc; color: #007AFF; border-left: 3px solid #007AFF; }
+    .admin-nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .admin-content { flex: 1; overflow-y: auto; padding: 16px; }
+    .admin-content h2 { margin-bottom: 16px; font-size: 20px; }
+    
+    .server-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: #fff; padding: 14px; border-radius: 8px; border: 1px solid #e0e0e0; }
+    .stat-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+    .stat-value { font-size: 22px; font-weight: 600; }
+    .stat-bar { height: 6px; background: #e0e0e0; border-radius: 3px; margin-top: 8px; }
+    .stat-bar-fill { height: 100%; background: #007AFF; border-radius: 3px; }
+    
+    .containers-list { background: #fff; border-radius: 8px; border: 1px solid #e0e0e0; }
+    .container-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #e0e0e0; gap: 12px; flex-wrap: wrap; }
+    .container-item:last-child { border-bottom: none; }
+    .container-status { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .container-status.running { background: #28a745; }
+    .container-status.stopped { background: #dc3545; }
+    .container-info { flex: 1; min-width: 120px; }
+    .container-name { font-weight: 500; }
+    .container-ip { font-size: 12px; color: #666; }
+    
+    .users-form { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .users-form input { padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 14px; min-width: 120px; }
+    .users-form label { display: flex; align-items: center; gap: 6px; font-size: 14px; white-space: nowrap; }
+    
+    .users-table-wrap { overflow-x: auto; }
+    .users-table { width: 100%; background: #fff; border-radius: 8px; border: 1px solid #e0e0e0; border-collapse: collapse; min-width: 500px; }
+    .users-table th, .users-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+    .users-table th { background: #f9f9f9; font-weight: 500; color: #666; font-size: 13px; white-space: nowrap; }
+    .users-table tr:last-child td { border-bottom: none; }
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; }
+    .badge-admin { background: #fff3cd; color: #856404; }
+    .badge-user { background: #d4edda; color: #155724; }
+    
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
+    .modal { background: #fff; padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+    .modal h3 { margin-bottom: 16px; }
+    .modal-session { padding: 8px 12px; background: #f5f5f5; border-radius: 6px; margin-bottom: 8px; font-family: monospace; font-size: 13px; word-break: break-all; }
+    
+    .hidden { display: none !important; }
+    
+    /* Mobile */
+    @media (max-width: 768px) {
+      .burger { display: block; }
+      .user-info span { display: none; }
+      
+      .tabs { padding: 0 8px; }
+      .tab { padding: 10px 12px; font-size: 14px; }
+      
+      .main-container { flex-direction: column; }
+      
+      .sessions-panel { 
+        position: fixed; top: 56px; left: 0; bottom: 0; width: 280px; z-index: 100; 
+        transform: translateX(-100%); transition: transform 0.3s ease;
+      }
+      .sessions-panel.open { transform: translateX(0); }
+      .sessions-overlay { 
+        position: fixed; inset: 0; top: 56px; background: rgba(0,0,0,0.5); z-index: 99; 
+        opacity: 0; pointer-events: none; transition: opacity 0.3s;
+      }
+      .sessions-overlay.open { opacity: 1; pointer-events: auto; }
+      
+      .terminal-wrapper { height: calc(100vh - 110px); }
+      
+      .files-panel { padding: 12px; }
+      .files-toolbar { flex-direction: column; align-items: stretch; }
+      .files-path { width: 100%; }
+      .files-buttons { justify-content: flex-end; }
+      
+      .admin-panel { flex-direction: column; }
+      .admin-nav { 
+        width: 100%; border-right: none; border-bottom: 1px solid #e0e0e0; 
+        display: flex; overflow-x: auto; padding: 0;
+      }
+      .admin-nav-item { padding: 12px 16px; border-left: none !important; white-space: nowrap; }
+      .admin-nav-item.active { border-left: none; border-bottom: 2px solid #007AFF; }
+      .admin-content { padding: 12px; }
+      
+      .server-stats { grid-template-columns: repeat(2, 1fr); }
+      
+      .users-form { flex-direction: column; align-items: stretch; }
+      .users-form input { width: 100%; }
+      .users-form .btn { width: 100%; }
+    }
+    
+    @media (max-width: 480px) {
+      .header { padding: 10px 12px; }
+      .logo { font-size: 20px; }
+      .server-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <button class="burger" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="logo">Beebro</div>
+    </div>
+    <div class="user-info" id="userInfo"></div>
+  </div>
+
+  <div id="loginView" class="login-container">
+    <div class="login-box">
+      <h2>Вход</h2>
+      <div class="form-group"><label>Логин</label><input type="text" id="loginUsername"></div>
+      <div class="form-group"><label>Пароль</label><input type="password" id="loginPassword"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="login()">Войти</button>
+    </div>
+  </div>
+
+  <div id="appView" class="hidden">
+    <div class="tabs">
+      <div class="tab active" data-tab="terminal" onclick="switchTab('terminal')">Терминал</div>
+      <div class="tab" data-tab="files" onclick="switchTab('files')">Файлы</div>
+      <div class="tab admin-only" data-tab="admin" onclick="switchTab('admin')">Админ</div>
+    </div>
+
+    <div class="sessions-overlay" id="sessionsOverlay" onclick="toggleSidebar()"></div>
+
+    <div id="terminalTab" class="main-container">
+      <div class="sessions-panel" id="sessionsPanel">
+        <div class="sessions-header">
+          <h3>Сессии</h3>
+          <button class="btn btn-small btn-primary" onclick="createSession()">+ Новая</button>
+        </div>
+        <div class="sessions-list" id="sessionsList"></div>
+      </div>
+      <div class="terminal-wrapper">
+        <div id="terminalContainer" class="terminal-container" onclick="terminal && terminal.focus()"></div>
+        <div class="status-bar">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Отключено</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="filesTab" class="files-panel hidden">
+      <div class="files-toolbar">
+        <span class="files-path" id="currentPath">/root</span>
+        <div class="files-buttons">
+          <button class="btn btn-small" onclick="navigateUp()">↑ Наверх</button>
+          <button class="btn btn-small" onclick="loadFiles()">Обновить</button>
+        </div>
+      </div>
+      <div class="files-list" id="filesList"></div>
+    </div>
+
+    <div id="adminTab" class="admin-panel hidden">
+      <div class="admin-nav">
+        <div class="admin-nav-item active" data-section="users" onclick="switchAdminSection('users')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          Пользователи
+        </div>
+        <div class="admin-nav-item" data-section="server" onclick="switchAdminSection('server')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+          Сервер
+        </div>
+      </div>
+      <div class="admin-content">
+        <div id="usersSection">
+          <h2>Пользователи</h2>
+          <div class="users-form">
+            <input type="text" id="newUsername" placeholder="Логин">
+            <input type="password" id="newPassword" placeholder="Пароль">
+            <label><input type="checkbox" id="newIsAdmin"> Админ</label>
+            <button class="btn btn-primary" onclick="createUser()">Добавить</button>
+          </div>
+          <div class="users-table-wrap">
+            <table class="users-table">
+              <thead><tr><th>Логин</th><th>Роль</th><th>Контейнер</th><th>Создан</th><th></th></tr></thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="serverSection" class="hidden">
+          <h2>Сервер</h2>
+          <div class="server-stats" id="serverStats"></div>
+          <h3 style="margin:16px 0 12px">Контейнеры</h3>
+          <div class="containers-list" id="containersList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="sessionsModal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <h3 id="modalTitle">Сессии</h3>
+      <div id="modalContent"></div>
+      <button class="btn" style="margin-top:16px;width:100%" onclick="closeModal()">Закрыть</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+  <script>
+    let currentUser = null, authToken = null, sessions = [], activeSessionId = null;
+    let terminal = null, fitAddon = null, ws = null;
+    let currentPath = "/root", currentTab = "terminal", currentAdminSection = "users";
+    let sidebarOpen = false;
+
+    function toggleSidebar() {
+      sidebarOpen = !sidebarOpen;
+      document.getElementById("sessionsPanel").classList.toggle("open", sidebarOpen);
+      document.getElementById("sessionsOverlay").classList.toggle("open", sidebarOpen);
+    }
+
+    async function init() {
+      try {
+        const res = await fetch("/api/me");
+        if (res.ok) { currentUser = await res.json(); showApp(); }
+      } catch {}
+    }
+
+    function showApp() {
+      document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("appView").classList.remove("hidden");
+      document.getElementById("userInfo").innerHTML = `<span>${currentUser.username}</span><button class="btn btn-small" onclick="logout()">Выйти</button>`;
+      if (!currentUser.isAdmin) document.querySelectorAll(".admin-only").forEach(el => el.classList.add("hidden"));
+      initTerminal();
+      loadSessions();
+    }
+
+    async function login() {
+      const username = document.getElementById("loginUsername").value;
+      const password = document.getElementById("loginPassword").value;
+      const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
+      if (res.ok) { const data = await res.json(); currentUser = { username: data.username, isAdmin: data.isAdmin }; authToken = data.token; showApp(); }
+      else alert("Неверный логин или пароль");
+    }
+
+    async function logout() { await fetch("/api/logout", { method: "POST" }); location.reload(); }
+
+    function initTerminal() {
+      terminal = new Terminal({ cursorBlink: true, fontSize: 14, fontFamily: "Menlo, Monaco, monospace", theme: { background: "#1e1e1e" } });
+      fitAddon = new FitAddon.FitAddon();
+      terminal.loadAddon(fitAddon);
+      terminal.open(document.getElementById("terminalContainer"));
+      setTimeout(() => fitAddon.fit(), 100);
+      terminal.onData(data => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "input", data })); });
+      window.addEventListener("resize", () => { if (currentTab === "terminal") setTimeout(() => fitAddon.fit(), 100); });
+    }
+
+    async function loadSessions() {
+      const res = await fetch("/api/sessions");
+      sessions = await res.json();
+      renderSessions();
+      if (sessions.length && !activeSessionId) switchSession(sessions[0].id);
+    }
+
+    function renderSessions() {
+      const list = document.getElementById("sessionsList");
+      if (!sessions.length) { list.innerHTML = "<div class=\"no-sessions\">Нет сессий</div>"; return; }
+      list.innerHTML = sessions.map(s => `<div class="session-item ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}');if(window.innerWidth<769)toggleSidebar()"><span>${s.name}</span><button class="session-close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</button></div>`).join("");
+    }
+
+    async function createSession() {
+      const res = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      if (res.ok) { const sess = await res.json(); sessions.push(sess); switchSession(sess.id); if(window.innerWidth<769)toggleSidebar(); }
+    }
+
+    async function deleteSession(id) {
+      if (!confirm("Удалить сессию?")) return;
+      await fetch(`/api/sessions/${id}`, { method: "DELETE" });
+      sessions = sessions.filter(s => s.id !== id);
+      if (activeSessionId === id) { activeSessionId = null; ws && ws.close(); terminal.clear(); setStatus(false); }
+      renderSessions();
+      if (sessions.length && !activeSessionId) switchSession(sessions[0].id);
+    }
+
+    function switchSession(id) {
+      if (activeSessionId === id) return;
+      ws && ws.close();
+      activeSessionId = id;
+      renderSessions();
+      terminal.clear();
+      const proto = location.protocol === "https:" ? "wss:" : "ws:";
+      ws = new WebSocket(`${proto}//${location.host}/?session=${id}&token=${authToken || ""}`);
+      ws.onopen = () => { setStatus(true); setTimeout(() => { fitAddon.fit(); terminal.focus(); ws.send(JSON.stringify({ type: "resize", cols: terminal.cols, rows: terminal.rows })); }, 100); };
+      ws.onmessage = e => { if (e.data instanceof Blob) e.data.text().then(t => terminal.write(t)); else terminal.write(e.data); };
+      ws.onclose = () => setStatus(false);
+    }
+
+    function setStatus(c) { document.getElementById("statusDot").className = "status-dot" + (c ? " connected" : ""); document.getElementById("statusText").textContent = c ? "Подключено" : "Отключено"; }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+      document.getElementById("terminalTab").classList.toggle("hidden", tab !== "terminal");
+      document.getElementById("filesTab").classList.toggle("hidden", tab !== "files");
+      document.getElementById("adminTab").classList.toggle("hidden", tab !== "admin");
+      if (tab === "terminal") setTimeout(() => { fitAddon && fitAddon.fit(); terminal && terminal.focus(); }, 100);
+      if (tab === "files") loadFiles();
+      if (tab === "admin") { loadUsers(); loadServerInfo(); }
+    }
+
+    function switchAdminSection(section) {
+      currentAdminSection = section;
+      document.querySelectorAll(".admin-nav-item").forEach(el => el.classList.toggle("active", el.dataset.section === section));
+      document.getElementById("usersSection").classList.toggle("hidden", section !== "users");
+      document.getElementById("serverSection").classList.toggle("hidden", section !== "server");
+    }
+
+    async function loadFiles() {
+      document.getElementById("currentPath").textContent = currentPath;
+      try {
+        const res = await fetch(`/api/files?path=${encodeURIComponent(currentPath)}`);
+        const files = await res.json();
+        document.getElementById("filesList").innerHTML = files.map(f => `<div class="file-item" onclick="openFile('${f.name}',${f.isDir})"><span class="file-icon">${f.isDir ? "📁" : "📄"}</span><div class="file-info"><div class="file-name">${f.name}</div><div class="file-meta">${f.size} • ${f.date}</div></div></div>`).join("");
+      } catch { document.getElementById("filesList").innerHTML = "<p>Ошибка загрузки</p>"; }
+    }
+
+    function openFile(name, isDir) { if (isDir) { currentPath = currentPath === "/" ? `/${name}` : `${currentPath}/${name}`; loadFiles(); } }
+    function navigateUp() { if (currentPath !== "/") { currentPath = currentPath.split("/").slice(0, -1).join("/") || "/"; loadFiles(); } }
+
+    async function loadUsers() {
+      const res = await fetch("/api/users");
+      const users = await res.json();
+      document.getElementById("usersTableBody").innerHTML = users.map(u => `<tr><td>${u.username}</td><td><span class="badge ${u.isAdmin ? "badge-admin" : "badge-user"}">${u.isAdmin ? "Админ" : "Юзер"}</span></td><td>${u.container || "-"}</td><td>${new Date(u.createdAt).toLocaleDateString()}</td><td>${u.username !== currentUser.username ? `<button class="btn btn-small btn-danger" onclick="deleteUser(${u.id})">Удалить</button>` : ""}</td></tr>`).join("");
+    }
+
+    async function createUser() {
+      const username = document.getElementById("newUsername").value;
+      const password = document.getElementById("newPassword").value;
+      const isAdmin = document.getElementById("newIsAdmin").checked;
+      if (!username || !password) return alert("Заполните все поля");
+      const res = await fetch("/api/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password, isAdmin }) });
+      if (res.ok) { document.getElementById("newUsername").value = ""; document.getElementById("newPassword").value = ""; document.getElementById("newIsAdmin").checked = false; loadUsers(); }
+      else { const err = await res.json(); alert(err.error); }
+    }
+
+    async function deleteUser(id) { if (!confirm("Удалить пользователя?")) return; await fetch(`/api/users/${id}`, { method: "DELETE" }); loadUsers(); }
+
+    async function loadServerInfo() {
+      try {
+        const res = await fetch("/api/server/info");
+        const info = await res.json();
+        const memPct = Math.round(info.memory.used / info.memory.total * 100);
+        const diskPct = Math.round(info.disk.used / info.disk.total * 100);
+        document.getElementById("serverStats").innerHTML = `
+          <div class="stat-card"><div class="stat-label">Память</div><div class="stat-value">${memPct}%</div><div class="stat-bar"><div class="stat-bar-fill" style="width:${memPct}%"></div></div><div style="font-size:11px;color:#666;margin-top:4px">${formatBytes(info.memory.used)} / ${formatBytes(info.memory.total)}</div></div>
+          <div class="stat-card"><div class="stat-label">CPU (${info.cpu.cores})</div><div class="stat-value">${info.cpu.load.toFixed(2)}</div><div class="stat-bar"><div class="stat-bar-fill" style="width:${Math.min(info.cpu.load/info.cpu.cores*100,100)}%"></div></div></div>
+          <div class="stat-card"><div class="stat-label">Диск</div><div class="stat-value">${diskPct}%</div><div class="stat-bar"><div class="stat-bar-fill" style="width:${diskPct}%"></div></div><div style="font-size:11px;color:#666;margin-top:4px">${formatBytes(info.disk.used)} / ${formatBytes(info.disk.total)}</div></div>
+          <div class="stat-card"><div class="stat-label">Аптайм</div><div class="stat-value" style="font-size:14px">${info.uptime}</div></div>`;
+      } catch {}
+      try {
+        const res = await fetch("/api/server/containers");
+        const containers = await res.json();
+        document.getElementById("containersList").innerHTML = containers.map(c => `<div class="container-item"><span class="container-status ${c.status.toLowerCase()}"></span><div class="container-info"><div class="container-name">${c.name}</div><div class="container-ip">${c.ip || "—"}</div></div><button class="btn btn-small" onclick="showContainerSessions('${c.name}')">Сессии</button></div>`).join("");
+      } catch {}
+    }
+
+    async function showContainerSessions(name) {
+      document.getElementById("modalTitle").textContent = `Сессии: ${name}`;
+      try {
+        const res = await fetch(`/api/server/containers/${name}/sessions`);
+        const sess = await res.json();
+        document.getElementById("modalContent").innerHTML = sess.length ? sess.map(s => `<div class="modal-session">${s.name}</div>`).join("") : "<p>Нет активных сессий</p>";
+      } catch { document.getElementById("modalContent").innerHTML = "<p>Ошибка</p>"; }
+      document.getElementById("sessionsModal").classList.remove("hidden");
+    }
+
+    function closeModal() { document.getElementById("sessionsModal").classList.add("hidden"); }
+    function formatBytes(b) { if(b<1024)return b+" B";if(b<1048576)return(b/1024).toFixed(1)+" KB";if(b<1073741824)return(b/1048576).toFixed(1)+" MB";return(b/1073741824).toFixed(1)+" GB"; }
+
+    init();
+  </script>
+</body>
+</html>
