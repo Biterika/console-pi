@@ -30,14 +30,23 @@
     .form-group label { display: block; margin-bottom: 6px; color: #666; font-size: 14px; }
     .form-group input { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #d0d0d0; font-size: 16px; }
     
-    .tabs { display: flex; background: #fff; border-bottom: 1px solid #e0e0e0; overflow-x: auto; }
-    .tab { padding: 12px 16px; cursor: pointer; border-bottom: 2px solid transparent; color: #666; white-space: nowrap; flex-shrink: 0; }
+    /* Desktop tabs */
+    .tabs { display: flex; background: #fff; border-bottom: 1px solid #e0e0e0; }
+    .tab { padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: #666; white-space: nowrap; }
     .tab:hover { color: #333; }
     .tab.active { color: #007AFF; border-bottom-color: #007AFF; }
     
-    .main-container { display: flex; height: calc(100vh - 110px); position: relative; }
+    /* Mobile menu */
+    .mobile-menu { display: none; position: fixed; top: 56px; left: 0; right: 0; bottom: 0; background: #fff; z-index: 100; flex-direction: column; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu-item { padding: 16px 20px; border-bottom: 1px solid #e0e0e0; font-size: 16px; color: #333; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+    .mobile-menu-item:hover { background: #f5f5f5; }
+    .mobile-menu-item.active { color: #007AFF; background: #e8f4fc; }
+    .mobile-menu-item svg { width: 20px; height: 20px; }
     
-    /* Sessions panel */
+    .main-container { display: flex; height: calc(100vh - 110px); }
+    
+    /* Sessions panel - desktop */
     .sessions-panel { width: 220px; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; flex-shrink: 0; }
     .sessions-header { padding: 12px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
     .sessions-header h3 { font-size: 13px; color: #666; }
@@ -49,32 +58,42 @@
     .session-item:hover .session-close { opacity: 1; }
     .no-sessions { padding: 20px; text-align: center; color: #999; font-size: 13px; }
     
+    /* Mobile sessions - horizontal scroll */
+    .sessions-bar { display: none; background: #fff; border-bottom: 1px solid #e0e0e0; padding: 8px; }
+    .sessions-bar-inner { display: flex; gap: 8px; overflow-x: auto; align-items: center; }
+    .sessions-bar-inner::-webkit-scrollbar { display: none; }
+    .session-chip { padding: 6px 12px; background: #f0f0f0; border-radius: 16px; font-size: 13px; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .session-chip.active { background: #007AFF; color: #fff; }
+    .session-chip .close { font-size: 14px; opacity: 0.7; }
+    .session-chip:hover .close { opacity: 1; }
+    .add-session-btn { padding: 6px 12px; background: #007AFF; color: #fff; border: none; border-radius: 16px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    
     .terminal-wrapper { flex: 1; display: flex; flex-direction: column; background: #1e1e1e; min-width: 0; }
     .terminal-container { flex: 1; overflow: hidden; }
     .status-bar { padding: 6px 12px; background: #fff; border-top: 1px solid #e0e0e0; font-size: 12px; color: #666; display: flex; align-items: center; }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #999; margin-right: 8px; flex-shrink: 0; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #999; margin-right: 8px; }
     .status-dot.connected { background: #28a745; }
     
     /* Files */
     .files-panel { height: calc(100vh - 110px); overflow-y: auto; padding: 16px; }
     .files-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
-    .files-path { font-family: monospace; background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e0e0e0; font-size: 13px; word-break: break-all; }
+    .files-path { font-family: monospace; background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e0e0e0; font-size: 13px; word-break: break-all; flex: 1; }
     .files-buttons { display: flex; gap: 8px; }
     .files-list { display: flex; flex-direction: column; gap: 8px; }
     .file-item { display: flex; align-items: center; padding: 12px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; gap: 12px; }
     .file-item:hover { border-color: #007AFF; }
-    .file-icon { font-size: 20px; flex-shrink: 0; }
+    .file-icon { font-size: 20px; }
     .file-info { flex: 1; min-width: 0; }
     .file-name { font-weight: 500; word-break: break-all; }
     .file-meta { font-size: 12px; color: #999; }
     
     /* Admin */
     .admin-panel { display: flex; height: calc(100vh - 110px); }
-    .admin-nav { width: 200px; background: #fff; border-right: 1px solid #e0e0e0; padding: 12px 0; flex-shrink: 0; }
+    .admin-nav { width: 200px; background: #fff; border-right: 1px solid #e0e0e0; padding: 12px 0; }
     .admin-nav-item { display: flex; align-items: center; padding: 10px 16px; cursor: pointer; color: #666; font-size: 14px; gap: 10px; }
     .admin-nav-item:hover { background: #f5f5f5; }
     .admin-nav-item.active { background: #e8f4fc; color: #007AFF; border-left: 3px solid #007AFF; }
-    .admin-nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .admin-nav-item svg { width: 18px; height: 18px; }
     .admin-content { flex: 1; overflow-y: auto; padding: 16px; }
     .admin-content h2 { margin-bottom: 16px; font-size: 20px; }
     
@@ -86,82 +105,62 @@
     .stat-bar-fill { height: 100%; background: #007AFF; border-radius: 3px; }
     
     .containers-list { background: #fff; border-radius: 8px; border: 1px solid #e0e0e0; }
-    .container-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #e0e0e0; gap: 12px; flex-wrap: wrap; }
+    .container-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #e0e0e0; gap: 12px; }
     .container-item:last-child { border-bottom: none; }
-    .container-status { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .container-status { width: 10px; height: 10px; border-radius: 50%; }
     .container-status.running { background: #28a745; }
     .container-status.stopped { background: #dc3545; }
-    .container-info { flex: 1; min-width: 120px; }
+    .container-info { flex: 1; }
     .container-name { font-weight: 500; }
     .container-ip { font-size: 12px; color: #666; }
     
     .users-form { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-    .users-form input { padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 14px; min-width: 120px; }
-    .users-form label { display: flex; align-items: center; gap: 6px; font-size: 14px; white-space: nowrap; }
-    
+    .users-form input { padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 14px; }
+    .users-form label { display: flex; align-items: center; gap: 6px; font-size: 14px; }
     .users-table-wrap { overflow-x: auto; }
     .users-table { width: 100%; background: #fff; border-radius: 8px; border: 1px solid #e0e0e0; border-collapse: collapse; min-width: 500px; }
     .users-table th, .users-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
-    .users-table th { background: #f9f9f9; font-weight: 500; color: #666; font-size: 13px; white-space: nowrap; }
+    .users-table th { background: #f9f9f9; font-weight: 500; color: #666; font-size: 13px; }
     .users-table tr:last-child td { border-bottom: none; }
-    .badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; }
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; }
     .badge-admin { background: #fff3cd; color: #856404; }
     .badge-user { background: #d4edda; color: #155724; }
     
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
     .modal { background: #fff; padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
     .modal h3 { margin-bottom: 16px; }
-    .modal-session { padding: 8px 12px; background: #f5f5f5; border-radius: 6px; margin-bottom: 8px; font-family: monospace; font-size: 13px; word-break: break-all; }
+    .modal-session { padding: 8px 12px; background: #f5f5f5; border-radius: 6px; margin-bottom: 8px; font-family: monospace; font-size: 13px; }
     
     .hidden { display: none !important; }
     
     /* Mobile */
     @media (max-width: 768px) {
       .burger { display: block; }
+      .tabs { display: none; }
       .user-info span { display: none; }
       
-      .tabs { padding: 0 8px; }
-      .tab { padding: 10px 12px; font-size: 14px; }
+      .sessions-panel { display: none; }
+      .sessions-bar { display: block; }
       
-      .main-container { flex-direction: column; }
+      .main-container { flex-direction: column; height: calc(100vh - 56px); }
+      #terminalTab { height: calc(100vh - 56px); display: flex; flex-direction: column; }
+      .terminal-wrapper { flex: 1; min-height: 0; }
       
-      .sessions-panel { 
-        position: fixed; top: 56px; left: 0; bottom: 0; width: 280px; z-index: 100; 
-        transform: translateX(-100%); transition: transform 0.3s ease;
-      }
-      .sessions-panel.open { transform: translateX(0); }
-      .sessions-overlay { 
-        position: fixed; inset: 0; top: 56px; background: rgba(0,0,0,0.5); z-index: 99; 
-        opacity: 0; pointer-events: none; transition: opacity 0.3s;
-      }
-      .sessions-overlay.open { opacity: 1; pointer-events: auto; }
+      .files-panel { height: calc(100vh - 56px); padding: 12px; }
       
-      .terminal-wrapper { height: calc(100vh - 110px); }
+      .admin-panel { flex-direction: column; height: calc(100vh - 56px); }
+      .admin-nav { width: 100%; border-right: none; border-bottom: 1px solid #e0e0e0; display: flex; overflow-x: auto; padding: 0; }
+      .admin-nav-item { padding: 12px 16px; border-left: none !important; white-space: nowrap; flex-shrink: 0; }
+      .admin-nav-item.active { border-left: none; border-bottom: 2px solid #007AFF; background: transparent; }
+      .admin-content { flex: 1; overflow-y: auto; }
       
-      .files-panel { padding: 12px; }
-      .files-toolbar { flex-direction: column; align-items: stretch; }
-      .files-path { width: 100%; }
-      .files-buttons { justify-content: flex-end; }
-      
-      .admin-panel { flex-direction: column; }
-      .admin-nav { 
-        width: 100%; border-right: none; border-bottom: 1px solid #e0e0e0; 
-        display: flex; overflow-x: auto; padding: 0;
-      }
-      .admin-nav-item { padding: 12px 16px; border-left: none !important; white-space: nowrap; }
-      .admin-nav-item.active { border-left: none; border-bottom: 2px solid #007AFF; }
-      .admin-content { padding: 12px; }
-      
-      .server-stats { grid-template-columns: repeat(2, 1fr); }
-      
-      .users-form { flex-direction: column; align-items: stretch; }
+      .users-form { flex-direction: column; }
       .users-form input { width: 100%; }
-      .users-form .btn { width: 100%; }
+      .users-form .btn-primary { width: 100%; }
+      .server-stats { grid-template-columns: repeat(2, 1fr); }
     }
     
     @media (max-width: 480px) {
-      .header { padding: 10px 12px; }
-      .logo { font-size: 20px; }
       .server-stats { grid-template-columns: 1fr; }
     }
   </style>
@@ -169,12 +168,28 @@
 <body>
   <div class="header">
     <div class="header-left">
-      <button class="burger" onclick="toggleSidebar()">
+      <button class="burger" onclick="toggleMenu()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <div class="logo">Beebro</div>
     </div>
     <div class="user-info" id="userInfo"></div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-item active" data-tab="terminal" onclick="switchTab('terminal');toggleMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 15l4-4-4-4M13 15h4"/></svg>
+      Терминал
+    </div>
+    <div class="mobile-menu-item" data-tab="files" onclick="switchTab('files');toggleMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+      Файлы
+    </div>
+    <div class="mobile-menu-item admin-only" data-tab="admin" onclick="switchTab('admin');toggleMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Админ
+    </div>
   </div>
 
   <div id="loginView" class="login-container">
@@ -187,22 +202,29 @@
   </div>
 
   <div id="appView" class="hidden">
+    <!-- Desktop tabs -->
     <div class="tabs">
       <div class="tab active" data-tab="terminal" onclick="switchTab('terminal')">Терминал</div>
       <div class="tab" data-tab="files" onclick="switchTab('files')">Файлы</div>
       <div class="tab admin-only" data-tab="admin" onclick="switchTab('admin')">Админ</div>
     </div>
 
-    <div class="sessions-overlay" id="sessionsOverlay" onclick="toggleSidebar()"></div>
-
+    <!-- Terminal Tab -->
     <div id="terminalTab" class="main-container">
-      <div class="sessions-panel" id="sessionsPanel">
+      <!-- Desktop sessions panel -->
+      <div class="sessions-panel">
         <div class="sessions-header">
           <h3>Сессии</h3>
           <button class="btn btn-small btn-primary" onclick="createSession()">+ Новая</button>
         </div>
         <div class="sessions-list" id="sessionsList"></div>
       </div>
+      
+      <!-- Mobile sessions bar -->
+      <div class="sessions-bar">
+        <div class="sessions-bar-inner" id="sessionsBar"></div>
+      </div>
+      
       <div class="terminal-wrapper">
         <div id="terminalContainer" class="terminal-container" onclick="terminal && terminal.focus()"></div>
         <div class="status-bar">
@@ -212,17 +234,19 @@
       </div>
     </div>
 
+    <!-- Files Tab -->
     <div id="filesTab" class="files-panel hidden">
       <div class="files-toolbar">
         <span class="files-path" id="currentPath">/root</span>
         <div class="files-buttons">
-          <button class="btn btn-small" onclick="navigateUp()">↑ Наверх</button>
-          <button class="btn btn-small" onclick="loadFiles()">Обновить</button>
+          <button class="btn btn-small" onclick="navigateUp()">↑</button>
+          <button class="btn btn-small" onclick="loadFiles()">⟳</button>
         </div>
       </div>
       <div class="files-list" id="filesList"></div>
     </div>
 
+    <!-- Admin Tab -->
     <div id="adminTab" class="admin-panel hidden">
       <div class="admin-nav">
         <div class="admin-nav-item active" data-section="users" onclick="switchAdminSection('users')">
@@ -274,12 +298,11 @@
     let currentUser = null, authToken = null, sessions = [], activeSessionId = null;
     let terminal = null, fitAddon = null, ws = null;
     let currentPath = "/root", currentTab = "terminal", currentAdminSection = "users";
-    let sidebarOpen = false;
+    let menuOpen = false;
 
-    function toggleSidebar() {
-      sidebarOpen = !sidebarOpen;
-      document.getElementById("sessionsPanel").classList.toggle("open", sidebarOpen);
-      document.getElementById("sessionsOverlay").classList.toggle("open", sidebarOpen);
+    function toggleMenu() {
+      menuOpen = !menuOpen;
+      document.getElementById("mobileMenu").classList.toggle("open", menuOpen);
     }
 
     async function init() {
@@ -326,14 +349,19 @@
     }
 
     function renderSessions() {
+      // Desktop list
       const list = document.getElementById("sessionsList");
-      if (!sessions.length) { list.innerHTML = "<div class=\"no-sessions\">Нет сессий</div>"; return; }
-      list.innerHTML = sessions.map(s => `<div class="session-item ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}');if(window.innerWidth<769)toggleSidebar()"><span>${s.name}</span><button class="session-close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</button></div>`).join("");
+      if (!sessions.length) { list.innerHTML = "<div class=\"no-sessions\">Нет сессий</div>"; }
+      else { list.innerHTML = sessions.map(s => `<div class="session-item ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}')"><span>${s.name}</span><button class="session-close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</button></div>`).join(""); }
+      
+      // Mobile bar
+      const bar = document.getElementById("sessionsBar");
+      bar.innerHTML = sessions.map(s => `<div class="session-chip ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}')"><span>${s.name}</span><span class="close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</span></div>`).join("") + `<button class="add-session-btn" onclick="createSession()">+ Новая</button>`;
     }
 
     async function createSession() {
       const res = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      if (res.ok) { const sess = await res.json(); sessions.push(sess); switchSession(sess.id); if(window.innerWidth<769)toggleSidebar(); }
+      if (res.ok) { const sess = await res.json(); sessions.push(sess); switchSession(sess.id); }
     }
 
     async function deleteSession(id) {
@@ -362,10 +390,15 @@
 
     function switchTab(tab) {
       currentTab = tab;
+      // Desktop tabs
       document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+      // Mobile menu
+      document.querySelectorAll(".mobile-menu-item").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+      
       document.getElementById("terminalTab").classList.toggle("hidden", tab !== "terminal");
       document.getElementById("filesTab").classList.toggle("hidden", tab !== "files");
       document.getElementById("adminTab").classList.toggle("hidden", tab !== "admin");
+      
       if (tab === "terminal") setTimeout(() => { fitAddon && fitAddon.fit(); terminal && terminal.focus(); }, 100);
       if (tab === "files") loadFiles();
       if (tab === "admin") { loadUsers(); loadServerInfo(); }
