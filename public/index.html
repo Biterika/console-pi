@@ -364,6 +364,7 @@
       if (!currentUser.isAdmin) document.querySelectorAll(".admin-only").forEach(el => el.classList.add("hidden"));
       initTerminal();
       loadSessions();
+      const hash = location.hash.slice(1); if (["terminal", "files", "admin"].includes(hash)) switchTab(hash, true);
     }
 
     async function login() {
@@ -535,6 +536,7 @@
     function formatBytes(b) { if(b<1024)return b+" B";if(b<1048576)return(b/1024).toFixed(1)+" KB";if(b<1073741824)return(b/1048576).toFixed(1)+" MB";return(b/1073741824).toFixed(1)+" GB"; }
 
     init();
+    window.addEventListener("popstate", e => { if (e.state?.tab) switchTab(e.state.tab, true); });
   </script>
 </body>
 </html>
