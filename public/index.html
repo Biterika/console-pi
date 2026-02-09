@@ -181,10 +181,7 @@
       #terminalTab { height: calc(100vh - 56px); display: flex; flex-direction: column; }
       .terminal-wrapper { flex: 1; min-height: 0; }
       
-      .ftp-info { background: #e8f4fc; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #b8daff; font-size: 14px; }
-    .ftp-info small { color: #666; }
-    .file-manager-frame { width: 100%; height: calc(100% - 80px); border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; }
-    .files-panel { height: calc(100vh - 56px); padding: 12px; }
+      .files-panel { height: calc(100vh - 56px); padding: 12px; }
       
       .admin-panel { flex-direction: column; height: calc(100vh - 56px); }
       .admin-nav { width: 100%; border-right: none; border-bottom: 1px solid #e0e0e0; display: flex; overflow-x: auto; padding: 0; }
@@ -521,7 +518,7 @@
       try {
         const res = await fetch(`/api/files?path=${encodeURIComponent(currentPath)}`, { headers: { Authorization: "Bearer " + authToken } });
         const data = await res.json(); const files = data.files || [];
-        document.getElementById("fileList").innerHTML = files.map(f => `<div class="file-item" onclick="openFile('${escapeHtml(f.name)}',${f.isDir})"><span class="file-icon">${f.isDir ? "📁" : "📄"}</span><div class="file-info"><div class="file-name">${escapeHtml(f.name)}</div><div class="file-meta">${f.size} B</div></div></div>`).join("");
+        document.getElementById("fileList").innerHTML = files.map(f => `<div class="file-item" onclick="openFile('${escapeJs(f.name)}',${f.isDir})"><span class="file-icon">${f.isDir ? "📁" : "📄"}</span><div class="file-info"><div class="file-name">${escapeHtml(f.name)}</div><div class="file-meta">${f.size} B</div></div></div>`).join("");
       } catch { document.getElementById("fileList").innerHTML = "<p>Ошибка загрузки</p>"; }
     }
 
@@ -541,15 +538,16 @@
       }
       imgPreview.src = imgUrl + "&token=" + authToken;
       imgPreview.style.display = "block";
-      document.querySelector(".editor-actions .btn-primary").style.display = "none";
       editingFilePath = path;
     }
 
     async function editFile(name) { const path = currentPath === "/" ? `/${name}` : `${currentPath}/${name}`; try { const res = await fetch(`/api/files/read?path=${encodeURIComponent(path)}`, { headers: { Authorization: "Bearer " + authToken } }); if (!res.ok) { alert("Не удалось открыть файл"); return; } const data = await res.json(); document.getElementById("fileEditor").classList.remove("hidden"); document.getElementById("editorFilename").textContent = path; document.getElementById("editorContent").value = data.content; editingFilePath = path; } catch(e) { alert("Ошибка: " + e.message); } }
     async function saveFile() { try { const res = await fetch("/api/files/write", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + authToken }, body: JSON.stringify({ path: editingFilePath, content: document.getElementById("editorContent").value }) }); if (res.ok) alert("Сохранено!"); else alert("Ошибка сохранения"); } catch(e) { alert("Ошибка: " + e.message); } }
-    function closeEditor() { document.getElementById("fileEditor").classList.add("hidden"); document.getElementById("editorContent").style.display = "block"; const imgPreview = document.getElementById("imagePreview"); if (imgPreview) imgPreview.style.display = "none"; document.querySelector(".editor-actions .btn-primary").style.display = "inline-block"; editingFilePath = null; }
+    function closeEditor() { document.getElementById("fileEditor").classList.add("hidden"); document.getElementById("editorContent").style.display = "block"; const imgPreview = document.getElementById("imagePreview"); if (imgPreview) imgPreview.style.display = "none"; editingFilePath = null; }
     let editingFilePath = null;
     function navigateUp() { if (currentPath !== "/") { currentPath = currentPath.split("/").slice(0, -1).join("/") || "/"; loadFiles(); } }
+    async function createFolder() { const name = prompt("Имя папки:"); if (!name) return; try { const res = await fetch("/api/files/mkdir", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + authToken }, body: JSON.stringify({ path: currentPath === "/" ? `/${name}` : `${currentPath}/${name}` }) }); if (res.ok) loadFiles(); else alert("Ошибка создания папки"); } catch(e) { alert("Ошибка: " + e.message); } }
+    async function createFile() { const name = prompt("Имя файла:"); if (!name) return; const path = currentPath === "/" ? `/${name}` : `${currentPath}/${name}`; try { const res = await fetch("/api/files/write", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + authToken }, body: JSON.stringify({ path, content: "" }) }); if (res.ok) { loadFiles(); editFile(name); } else alert("Ошибка создания файла"); } catch(e) { alert("Ошибка: " + e.message); } }
 
     async function loadUsers() {
       const res = await fetch("/api/users");
@@ -609,7 +607,8 @@
 
     function closeModal() { document.getElementById("sessionsModal").classList.add("hidden"); }
     function formatBytes(b) { if(b<1024)return b+" B";if(b<1048576)return(b/1024).toFixed(1)+" KB";if(b<1073741824)return(b/1048576).toFixed(1)+" MB";return(b/1073741824).toFixed(1)+" GB"; }
-    function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+    function escapeHtml(str) { if (!str) return ''; const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+    function escapeJs(str) { if (!str) return ''; return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
 
     init();
   </script>
