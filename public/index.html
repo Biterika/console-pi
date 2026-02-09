@@ -444,8 +444,9 @@
 
     function setStatus(c) { document.getElementById("statusDot").className = "status-dot" + (c ? " connected" : ""); document.getElementById("statusText").textContent = c ? "Подключено" : "Отключено"; }
 
-    function switchTab(tab) {
+    function switchTab(tab, skipHistory) {
       currentTab = tab;
+      if (!skipHistory) history.pushState({ tab }, "", "#" + tab);
       // Desktop tabs
       document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
       // Mobile menu

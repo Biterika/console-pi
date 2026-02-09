@@ -19,7 +19,7 @@ module.exports = {
   },
   
   lxc: {
-    template: process.env.LXC_TEMPLATE || 'beebro-template',
+    template: process.env.LXC_TEMPLATE || 'beebro-base',
     containerPrefix: process.env.LXC_CONTAINER_PREFIX || 'beebro-',
   },
 };

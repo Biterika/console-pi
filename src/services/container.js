@@ -13,7 +13,7 @@ async function createContainer(name) {
   logger.info(`Creating container ${containerName}...`);
   
   try {
-    execSync(`lxc launch ${config.lxc.template} ${containerName}`, TIMEOUT);
+    execSync(`lxc copy ${config.lxc.template} ${containerName} && lxc start ${containerName}`, TIMEOUT);
     
     // Wait for container to be ready
     await new Promise(r => setTimeout(r, 3000));
