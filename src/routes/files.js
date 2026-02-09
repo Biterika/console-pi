@@ -293,3 +293,53 @@ router.get("/download", requireAuth, (req, res) => {
 });
 
 module.exports = router;
+
+// GET /api/files/raw - Read raw file (for images)
+router.get("/raw", requireAuth, (req, res) => {
+  const filePath = req.query.path;
+  if (!filePath) {
+    return res.status(400).json({ error: "Path required" });
+  }
+  
+  const user = req.authUser;
+  if (!user.container) {
+    return res.status(400).json({ error: "No container" });
+  }
+  
+  const rootfsPath = `/mnt/lxd-storage/containers/${user.container}/rootfs`;
+  const fullPath = path.join(rootfsPath, filePath);
+  
+  // Security check
+  if (!fullPath.startsWith(rootfsPath)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  
+  // Block special paths
+  if (filePath.startsWith("/dev") || filePath.startsWith("/proc") || filePath.startsWith("/sys")) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  
+  try {
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    
+    const ext = path.extname(fullPath).toLowerCase();
+    const mimeTypes = {
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon',
+      '.bmp': 'image/bmp',
+    };
+    
+    const contentType = mimeTypes[ext] || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
+    fs.createReadStream(fullPath).pipe(res);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

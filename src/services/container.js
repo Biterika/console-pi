@@ -2,21 +2,57 @@ const { execSync } = require('child_process');
 const config = require('../config');
 const logger = require('../utils/logger');
 
-const TIMEOUT = { timeout: 120000 };
+/**
+ * List all beebro containers
+ */
+function listContainers() {
+  try {
+    const raw = execSync('lxc list --format json').toString();
+    const containers = JSON.parse(raw);
+    
+    return containers
+      .filter(c => !c.name.includes('base') && !c.name.includes('template'))
+      .map(c => {
+        let size = null;
+        try {
+          const sizeRaw = execSync(`du -sb /mnt/lxd-storage/containers/${c.name}/rootfs 2>/dev/null || echo "0"`).toString().trim();
+          size = parseInt(sizeRaw.split('\t')[0]) || 0;
+        } catch {}
+        return {
+          name: c.name,
+          status: c.status,
+          ip: c.state?.network?.eth0?.addresses?.find(a => a.family === 'inet')?.address || null,
+          size,
+        };
+      });
+  } catch (err) {
+    logger.error('Failed to list containers:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Execute command in container
+ */
+function exec(containerName, command) {
+  return execSync(`lxc exec ${containerName} -- bash -c '${command}'`);
+}
 
 /**
  * Create a new container from template
  */
-async function createContainer(name) {
-  const containerName = `${config.lxc.containerPrefix}${name}`;
-  
-  logger.info(`Creating container ${containerName}...`);
+async function createContainer(containerName) {
+  logger.info(`Creating container ${containerName} from ${config.lxcTemplate}`);
   
   try {
-    execSync(`lxc copy ${config.lxc.template} ${containerName} && lxc start ${containerName}`, TIMEOUT);
+    // Copy from template
+    execSync(`lxc copy ${config.lxcTemplate} ${containerName}`);
     
-    // Wait for container to be ready
-    await new Promise(r => setTimeout(r, 3000));
+    // Start the container
+    execSync(`lxc start ${containerName}`);
+    
+    // Wait for network
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
     logger.info(`Container ${containerName} created and started`);
     return containerName;
@@ -29,89 +65,71 @@ async function createContainer(name) {
 /**
  * Delete a container
  */
-async function deleteContainer(containerName) {
-  logger.info(`Deleting container ${containerName}...`);
+function deleteContainer(containerName) {
+  logger.info(`Deleting container ${containerName}`);
   
   try {
-    execSync(`lxc delete ${containerName} --force`, { timeout: 30000 });
+    // Stop first if running
+    try {
+      execSync(`lxc stop ${containerName} --force`);
+    } catch {}
+    
+    // Delete
+    execSync(`lxc delete ${containerName}`);
+    
     logger.info(`Container ${containerName} deleted`);
   } catch (err) {
     logger.error(`Failed to delete container ${containerName}:`, err.message);
-    // Don't throw - container might already be deleted
+    throw new Error(`Failed to delete container: ${err.message}`);
   }
 }
 
 /**
- * Check if container is running
+ * Get container IP address
  */
-function isContainerRunning(containerName) {
+function getContainerIP(containerName) {
   try {
-    const state = execSync(`lxc list ${containerName} --format csv -c s`).toString().trim();
-    return state === 'RUNNING';
+    const raw = execSync(`lxc list ${containerName} --format json`).toString();
+    const containers = JSON.parse(raw);
+    if (containers.length === 0) return null;
+    
+    const container = containers[0];
+    return container.state?.network?.eth0?.addresses?.find(a => a.family === 'inet')?.address || null;
   } catch {
-    return false;
+    return null;
   }
 }
 
 /**
- * Start container if not running
+ * Ensure container is running
  */
 async function ensureContainerRunning(containerName) {
-  if (!isContainerRunning(containerName)) {
-    logger.info(`Starting container ${containerName}...`);
-    await new Promise(r => setTimeout(r, 3000));
-  }
-}
-
-/**
- * Check if container exists
- */
-function containerExists(containerName) {
   try {
-    const list = execSync(`lxc list --format csv -c n`).toString();
-    return list.includes(containerName);
-  } catch {
-    return false;
-  }
-}
-
-/**
- * List all containers (excluding base/template)
- */
-function listContainers() {
-  try {
-    const raw = execSync('lxc list --format json').toString();
+    const raw = execSync(`lxc list ${containerName} --format json`).toString();
     const containers = JSON.parse(raw);
     
-    return containers
-      .filter(c => !c.name.includes('base') && !c.name.includes('template'))
-      .map(c => ({
-        name: c.name,
-        status: c.status,
-        ip: c.state?.network?.eth0?.addresses?.find(a => a.family === 'inet')?.address || null,
-      }));
+    if (containers.length === 0) {
+      throw new Error(`Container ${containerName} not found`);
+    }
+    
+    const container = containers[0];
+    
+    if (container.status !== 'Running') {
+      logger.info(`Starting container ${containerName}`);
+      execSync(`lxc start ${containerName}`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
   } catch (err) {
-    logger.error('Failed to list containers:', err.message);
-    return [];
+    logger.error(`Failed to ensure container running:`, err.message);
+    throw err;
   }
-}
-
-/**
- * Execute command in container
- */
-function exec(containerName, command, options = {}) {
-  return execSync(`lxc exec ${containerName} -- ${command}`, {
-    timeout: options.timeout || 10000,
-    ...options,
-  });
 }
 
 module.exports = {
-  createContainer,
-  deleteContainer,
-  isContainerRunning,
-  ensureContainerRunning,
-  containerExists,
   listContainers,
   exec,
+  createContainer,
+  deleteContainer,
+  getContainerIP,
+  ensureContainerRunning,
 };

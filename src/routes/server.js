@@ -5,6 +5,7 @@ const { validateContainerName } = require('../middleware/validate');
 const containerService = require('../services/container');
 const tmux = require('../services/tmux');
 const logger = require('../utils/logger');
+const pool = require('../db/pool');
 
 const router = express.Router();
 

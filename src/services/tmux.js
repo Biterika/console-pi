@@ -4,13 +4,14 @@ const logger = require('../utils/logger');
 /**
  * Create a new tmux session running pi
  */
-async function createSession(containerName, sessionName) {
+async function createSession(containerName, sessionName, startPi = true) {
   logger.info(`Creating tmux session ${sessionName} in ${containerName}`);
   
   await container.ensureContainerRunning(containerName);
   
   try {
-    container.exec(containerName, `tmux new-session -d -s ${sessionName} pi`);
+    const cmd = startPi ? `tmux new-session -d -s ${sessionName} pi` : `tmux new-session -d -s ${sessionName}`;
+    container.exec(containerName, cmd);
     logger.info(`Session ${sessionName} created`);
     return sessionName;
   } catch (err) {

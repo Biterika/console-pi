@@ -45,7 +45,8 @@ router.post('/', requireAuth, async (req, res) => {
     const tmuxSession = `sess${sessionId}`;
     
     // Create tmux session
-    await tmux.createSession(user.container, tmuxSession);
+    const startPi = req.body.startPi !== false;
+    await tmux.createSession(user.container, tmuxSession, startPi);
     
     // Count existing sessions for naming
     const [existing] = await pool.execute(
