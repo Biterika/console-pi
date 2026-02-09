@@ -352,7 +352,7 @@
 
     async function init() {
       try {
-        const res = await fetch("/api/me", { headers: { Authorization: "Bearer " + authToken } });
+        const res = await fetch("/api/me");
         if (res.ok) { currentUser = await res.json(); showApp(); }
       } catch {}
     }
@@ -364,7 +364,6 @@
       if (!currentUser.isAdmin) document.querySelectorAll(".admin-only").forEach(el => el.classList.add("hidden"));
       initTerminal();
       loadSessions();
-      const hash = location.hash.slice(1); if (["terminal", "files", "admin"].includes(hash)) switchTab(hash, true);
     }
 
     async function login() {
@@ -445,9 +444,8 @@
 
     function setStatus(c) { document.getElementById("statusDot").className = "status-dot" + (c ? " connected" : ""); document.getElementById("statusText").textContent = c ? "Подключено" : "Отключено"; }
 
-    function switchTab(tab, skipHistory) {
+    function switchTab(tab) {
       currentTab = tab;
-      if (!skipHistory) history.pushState({ tab }, "", "#" + tab);
       // Desktop tabs
       document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
       // Mobile menu
@@ -536,7 +534,6 @@
     function formatBytes(b) { if(b<1024)return b+" B";if(b<1048576)return(b/1024).toFixed(1)+" KB";if(b<1073741824)return(b/1048576).toFixed(1)+" MB";return(b/1073741824).toFixed(1)+" GB"; }
 
     init();
-    window.addEventListener("popstate", e => { if (e.state?.tab) switchTab(e.state.tab, true); });
   </script>
 </body>
 </html>

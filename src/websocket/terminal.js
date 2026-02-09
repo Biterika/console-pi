@@ -54,7 +54,7 @@ async function handleConnection(ws, req) {
   
   // Spawn PTY process
   const proc = pty.spawn('lxc', [
-    'exec', user.container, '--',
+    'exec', '-t', user.container, '--',
     'tmux', 'attach-session', '-t', session.tmux_session
   ], {
     name: 'xterm-256color',
