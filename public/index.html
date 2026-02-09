@@ -518,17 +518,47 @@
       if (sessions.length && !activeSessionId) switchSession(sessions[0].id);
     }
 
+    let wsReconnectTimer = null;
+    
     function switchSession(id) {
-      if (activeSessionId === id) return;
-      ws && ws.close();
+      if (activeSessionId === id && ws && ws.readyState === WebSocket.OPEN) return;
+      if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+      if (ws) { ws.onclose = null; ws.close(); }
       activeSessionId = id;
       renderSessions();
       terminal.clear();
+      connectWebSocket(id);
+    }
+    
+    function connectWebSocket(id) {
       const proto = location.protocol === "https:" ? "wss:" : "ws:";
+      console.log("Connecting WebSocket to session:", id);
       ws = new WebSocket(`${proto}//${location.host}/?session=${id}&token=${authToken || ""}`);
-      ws.onopen = () => { setStatus(true); setTimeout(() => { fitAddon.fit(); terminal.focus(); ws.send(JSON.stringify({ type: "resize", cols: terminal.cols, rows: terminal.rows })); }, 100); };
+      ws.onopen = () => { 
+        console.log("WebSocket connected");
+        setStatus(true); 
+        setTimeout(() => { 
+          fitAddon.fit(); 
+          terminal.focus(); 
+          ws.send(JSON.stringify({ type: "resize", cols: terminal.cols, rows: terminal.rows })); 
+        }, 100); 
+      };
       ws.onmessage = e => { if (e.data instanceof Blob) e.data.text().then(t => terminal.write(t)); else terminal.write(e.data); };
-      ws.onclose = () => setStatus(false);
+      ws.onerror = e => { console.error("WebSocket error:", e); };
+      ws.onclose = (e) => { 
+        console.log("WebSocket closed, code:", e.code, "reason:", e.reason);
+        setStatus(false);
+        // Auto-reconnect after 3 seconds if session is still active
+        if (activeSessionId === id && !wsReconnectTimer) {
+          wsReconnectTimer = setTimeout(() => {
+            wsReconnectTimer = null;
+            if (activeSessionId === id) {
+              console.log("Reconnecting...");
+              connectWebSocket(id);
+            }
+          }, 3000);
+        }
+      };
     }
 
     function setStatus(c) { document.getElementById("statusDot").className = "status-dot" + (c ? " connected" : ""); document.getElementById("statusText").textContent = c ? "Подключено" : "Отключено"; }
