@@ -62,13 +62,36 @@ router.get('/containers', requireAdmin, (req, res) => {
   }
 });
 
+
 /**
  * GET /api/server/containers/:name/sessions - List tmux sessions in container
  */
-router.get('/containers/:name/sessions', requireAdmin, validateContainerName, (req, res) => {
+router.get('/containers/:name/sessions', requireAdmin, validateContainerName, async (req, res) => {
   try {
-    const sessions = tmux.listSessions(req.params.name);
-    res.json(sessions);
+    const tmuxSessions = tmux.listSessions(req.params.name);
+    
+    // Get session names from DB
+    const tmuxNames = tmuxSessions.map(s => s.name);
+    if (tmuxNames.length === 0) {
+      return res.json([]);
+    }
+    
+    const placeholders = tmuxNames.map(() => '?').join(',');
+    const [dbSessions] = await pool.execute(
+      `SELECT tmux_session, name FROM sessions WHERE tmux_session IN (${placeholders})`,
+      tmuxNames
+    );
+    
+    const nameMap = {};
+    dbSessions.forEach(s => { nameMap[s.tmux_session] = s.name; });
+    
+    const result = tmuxSessions.map(s => ({
+      name: nameMap[s.name] || s.name,
+      tmuxSession: s.name,
+      created: s.created
+    }));
+    
+    res.json(result);
   } catch (err) {
     logger.error('Failed to list container sessions:', err.message);
     res.json([]);
