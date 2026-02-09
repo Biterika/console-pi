@@ -50,7 +50,8 @@ async function getUserContainer(username) {
 async function containerProxy(req, res, next) {
   // Match pattern: /username:port/... or /username/...
   // Skip API routes and static files
-  if (req.path.startsWith('/api/') || req.path.startsWith('/pma')) {
+  // Skip API, phpMyAdmin, root path and static files
+  if (req.path.startsWith('/api/') || req.path.startsWith('/pma') || req.path === '/' || req.path.includes('.')) {
     return next();
   }
   
