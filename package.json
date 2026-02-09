@@ -11,11 +11,17 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src tests"
   },
-  "keywords": ["terminal", "lxc", "ai", "coding", "agent"],
+  "keywords": [
+    "terminal",
+    "lxc",
+    "ai",
+    "coding",
+    "agent"
+  ],
   "author": "Beebro",
   "license": "MIT",
   "dependencies": {
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "mysql2": "^3.16.3",
     "node-pty": "^1.1.0",
@@ -28,9 +34,15 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["./tests/setup.js"],
-    "testMatch": ["**/tests/**/*.test.js"],
-    "collectCoverageFrom": ["src/**/*.js"],
+    "setupFilesAfterEnv": [
+      "./tests/setup.js"
+    ],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
     "coverageThreshold": {
       "global": {
         "branches": 50,
