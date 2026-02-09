@@ -3,7 +3,7 @@ const config = require('../config');
 const logger = require('../utils/logger');
 
 /**
- * List all beebro containers
+ * List all beebro containers (without size for speed)
  */
 function listContainers() {
   try {
@@ -12,22 +12,26 @@ function listContainers() {
     
     return containers
       .filter(c => !c.name.includes('base') && !c.name.includes('template'))
-      .map(c => {
-        let size = null;
-        try {
-          const sizeRaw = execSync(`du -sb /mnt/lxd-storage/containers/${c.name}/rootfs 2>/dev/null || echo "0"`).toString().trim();
-          size = parseInt(sizeRaw.split('\t')[0]) || 0;
-        } catch {}
-        return {
-          name: c.name,
-          status: c.status,
-          ip: c.state?.network?.eth0?.addresses?.find(a => a.family === 'inet')?.address || null,
-          size,
-        };
-      });
+      .map(c => ({
+        name: c.name,
+        status: c.status,
+        ip: c.state?.network?.eth0?.addresses?.find(a => a.family === 'inet')?.address || null,
+      }));
   } catch (err) {
     logger.error('Failed to list containers:', err.message);
     return [];
+  }
+}
+
+/**
+ * Get container size
+ */
+function getContainerSize(containerName) {
+  try {
+    const sizeRaw = execSync(`du -sb /mnt/lxd-storage/containers/${containerName}/rootfs 2>/dev/null || echo "0"`).toString().trim();
+    return parseInt(sizeRaw.split('\t')[0]) || 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -45,15 +49,9 @@ async function createContainer(containerName) {
   logger.info(`Creating container ${containerName} from ${config.lxcTemplate}`);
   
   try {
-    // Copy from template
     execSync(`lxc copy ${config.lxcTemplate} ${containerName}`);
-    
-    // Start the container
     execSync(`lxc start ${containerName}`);
-    
-    // Wait for network
     await new Promise(resolve => setTimeout(resolve, 3000));
-    
     logger.info(`Container ${containerName} created and started`);
     return containerName;
   } catch (err) {
@@ -67,16 +65,9 @@ async function createContainer(containerName) {
  */
 function deleteContainer(containerName) {
   logger.info(`Deleting container ${containerName}`);
-  
   try {
-    // Stop first if running
-    try {
-      execSync(`lxc stop ${containerName} --force`);
-    } catch {}
-    
-    // Delete
+    try { execSync(`lxc stop ${containerName} --force`); } catch {}
     execSync(`lxc delete ${containerName}`);
-    
     logger.info(`Container ${containerName} deleted`);
   } catch (err) {
     logger.error(`Failed to delete container ${containerName}:`, err.message);
@@ -92,9 +83,7 @@ function getContainerIP(containerName) {
     const raw = execSync(`lxc list ${containerName} --format json`).toString();
     const containers = JSON.parse(raw);
     if (containers.length === 0) return null;
-    
-    const container = containers[0];
-    return container.state?.network?.eth0?.addresses?.find(a => a.family === 'inet')?.address || null;
+    return containers[0].state?.network?.eth0?.addresses?.find(a => a.family === 'inet')?.address || null;
   } catch {
     return null;
   }
@@ -107,14 +96,8 @@ async function ensureContainerRunning(containerName) {
   try {
     const raw = execSync(`lxc list ${containerName} --format json`).toString();
     const containers = JSON.parse(raw);
-    
-    if (containers.length === 0) {
-      throw new Error(`Container ${containerName} not found`);
-    }
-    
-    const container = containers[0];
-    
-    if (container.status !== 'Running') {
+    if (containers.length === 0) throw new Error(`Container ${containerName} not found`);
+    if (containers[0].status !== 'Running') {
       logger.info(`Starting container ${containerName}`);
       execSync(`lxc start ${containerName}`);
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -127,6 +110,7 @@ async function ensureContainerRunning(containerName) {
 
 module.exports = {
   listContainers,
+  getContainerSize,
   exec,
   createContainer,
   deleteContainer,

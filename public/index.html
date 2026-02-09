@@ -584,7 +584,16 @@
       try {
         const res = await fetch("/api/server/containers");
         const containers = await res.json();
-        document.getElementById("containersList").innerHTML = containers.map(c => `<div class="container-item"><span class="container-status ${c.status.toLowerCase()}"></span><div class="container-info"><div class="container-name">${c.name}</div><div class="container-ip">${c.ip || "—"}</div><div class="container-size">${formatBytes(c.size || 0)}</div></div><button class="btn btn-small" onclick="showContainerSessions('${c.name}')">Сессии</button></div>`).join("");
+        document.getElementById("containersList").innerHTML = containers.map(c => `<div class="container-item" data-name="${c.name}"><span class="container-status ${c.status.toLowerCase()}"></span><div class="container-info"><div class="container-name">${c.name}</div><div class="container-ip">${c.ip || "—"}</div><div class="container-size" id="size-${c.name}">⏳</div></div><button class="btn btn-small" onclick="showContainerSessions('${c.name}')">Сессии</button></div>`).join("");
+        // Load sizes async
+        containers.forEach(async c => {
+          try {
+            const sizeRes = await fetch(`/api/server/containers/${c.name}/size`);
+            const data = await sizeRes.json();
+            const el = document.getElementById(`size-${c.name}`);
+            if (el) el.textContent = formatBytes(data.size || 0);
+          } catch {}
+        });
       } catch {}
     }
 

@@ -100,3 +100,15 @@ router.get('/containers/:name/sessions', requireAdmin, validateContainerName, as
 });
 
 module.exports = router;
+
+/**
+ * GET /api/server/containers/:name/size - Get container size
+ */
+router.get('/containers/:name/size', requireAdmin, validateContainerName, (req, res) => {
+  try {
+    const size = containerService.getContainerSize(req.params.name);
+    res.json({ size });
+  } catch (err) {
+    res.json({ size: 0 });
+  }
+});
