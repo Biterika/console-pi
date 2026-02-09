@@ -585,7 +585,6 @@
         const res = await fetch("/api/server/containers");
         const containers = await res.json();
         document.getElementById("containersList").innerHTML = containers.map(c => `<div class="container-item"><span class="container-status ${c.status.toLowerCase()}"></span><div class="container-info"><div class="container-name">${c.name}</div><div class="container-ip">${c.ip || "—"}</div><div class="container-size">${formatBytes(c.size || 0)}</div></div><button class="btn btn-small" onclick="showContainerSessions('${c.name}')">Сессии</button></div>`).join("");
-    .container-size { font-size: 12px; color: #888; }
       } catch {}
     }
 
