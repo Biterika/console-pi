@@ -140,6 +140,7 @@
     .container-info { flex: 1; }
     .container-name { font-weight: 500; }
     .container-ip { font-size: 12px; color: #666; }
+    .container-size { font-size: 12px; color: #888; }
     
     .users-form { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
     .users-form input { padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 14px; }
@@ -583,7 +584,8 @@
       try {
         const res = await fetch("/api/server/containers");
         const containers = await res.json();
-        document.getElementById("containersList").innerHTML = containers.map(c => `<div class="container-item"><span class="container-status ${c.status.toLowerCase()}"></span><div class="container-info"><div class="container-name">${c.name}</div><div class="container-ip">${c.ip || "—"}</div></div><button class="btn btn-small" onclick="showContainerSessions('${c.name}')">Сессии</button></div>`).join("");
+        document.getElementById("containersList").innerHTML = containers.map(c => `<div class="container-item"><span class="container-status ${c.status.toLowerCase()}"></span><div class="container-info"><div class="container-name">${c.name}</div><div class="container-ip">${c.ip || "—"}</div><div class="container-size">${formatBytes(c.size || 0)}</div></div><button class="btn btn-small" onclick="showContainerSessions('${c.name}')">Сессии</button></div>`).join("");
+    .container-size { font-size: 12px; color: #888; }
       } catch {}
     }
 
