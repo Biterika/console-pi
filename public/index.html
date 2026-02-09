@@ -415,6 +415,49 @@
       fitAddon = new FitAddon.FitAddon();
       terminal.loadAddon(fitAddon);
       terminal.open(document.getElementById("terminalContainer"));
+      
+      // Drag & drop file upload to terminal
+      const termContainer = document.getElementById("terminalContainer");
+      termContainer.addEventListener("dragover", function(e) { 
+        e.preventDefault(); 
+        e.stopPropagation();
+        termContainer.style.opacity = "0.7"; 
+      });
+      termContainer.addEventListener("dragleave", function(e) { 
+        e.preventDefault();
+        termContainer.style.opacity = "1"; 
+      });
+      termContainer.addEventListener("drop", async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        termContainer.style.opacity = "1";
+        if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+        const file = e.dataTransfer.files[0];
+        if (!file) return;
+        const token = authToken || localStorage.getItem("token") || "";
+        try {
+          const res = await fetch("/api/files/upload?path=/tmp", {
+            method: "POST",
+            headers: { 
+              "Authorization": "Bearer " + token, 
+              "X-Filename": encodeURIComponent(file.name) 
+            },
+            body: file
+          });
+          const data = await res.json();
+          if (res.ok && data.path) {
+            if (ws && ws.readyState === 1) {
+              ws.send(JSON.stringify({ type: "input", data: data.path + " " }));
+            }
+          } else { 
+            alert("Ошибка загрузки: " + (data.error || "Unknown error")); 
+          }
+        } catch (err) { 
+          console.error("Upload error:", err); 
+          alert("Ошибка: " + err.message); 
+        }
+      });
+      
       setTimeout(() => fitAddon.fit(), 100);
       terminal.onData(data => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "input", data })); });
       window.addEventListener("resize", () => { if (currentTab === "terminal") setTimeout(() => fitAddon.fit(), 100); });

@@ -345,4 +345,43 @@ router.get("/raw", requireAuth, (req, res) => {
   }
 });
 
+
+/**
+ * POST /api/files/upload - Upload file to container
+ */
+router.post("/upload", requireAuth, (req, res) => {
+  const user = req.authUser;
+  if (!user.container) {
+    return res.status(400).json({ error: "No container assigned" });
+  }
+
+  const targetPath = req.query.path || "/tmp";
+  const containerRoot = getContainerRoot(user.container);
+  
+  const chunks = [];
+  req.on('data', chunk => chunks.push(chunk));
+  req.on('end', () => {
+    try {
+      const buffer = Buffer.concat(chunks);
+      const filename = req.headers['x-filename'] || 'upload_' + Date.now();
+      const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+      
+      const fullPath = sanitizePath(path.join(targetPath, safeName), "/");
+      const hostPath = path.join(containerRoot, fullPath);
+      
+      const dir = path.dirname(hostPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      fs.writeFileSync(hostPath, buffer);
+      logger.info('Uploaded file to ' + fullPath + ' for user ' + user.username);
+      
+      res.json({ success: true, path: fullPath });
+    } catch (err) {
+      logger.error('Failed to save uploaded file:', err.message);
+      res.status(500).json({ error: 'Failed to save file' });
+    }
+  });
+});
 module.exports = router;
