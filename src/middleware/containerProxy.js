@@ -46,25 +46,37 @@ async function getUserContainer(username) {
   }
 }
 
-// Middleware to handle /:username::port/* requests
+// Middleware to handle /:username::port/* or /:username/* (port 80 default)
 async function containerProxy(req, res, next) {
-  // Match pattern: /username:port/...
-  const match = req.path.match(/^\/([a-zA-Z][a-zA-Z0-9_-]*):(\d+)(\/.*)?$/);
-  if (!match) {
+  // Match pattern: /username:port/... or /username/...
+  // Skip API routes and static files
+  if (req.path.startsWith('/api/') || req.path.startsWith('/pma')) {
     return next();
   }
   
-  const [, username, port, subpath = '/'] = match;
-  const portNum = parseInt(port);
+  const matchWithPort = req.path.match(/^\/([a-zA-Z][a-zA-Z0-9_-]*):(\d+)(\/.*)?$/);
+  const matchNoPort = req.path.match(/^\/([a-zA-Z][a-zA-Z0-9_-]*)(\/.*)?$/);
+  
+  let username, portNum, subpath;
+  
+  if (matchWithPort) {
+    [, username, portNum, subpath = '/'] = matchWithPort;
+    portNum = parseInt(portNum);
+  } else if (matchNoPort) {
+    [, username, subpath = '/'] = matchNoPort;
+    portNum = 80; // Default port
+  } else {
+    return next();
+  }
   
   if (portNum < 1 || portNum > 65535) {
-    return res.status(400).json({ error: 'Invalid port' });
+    return next(); // Not a proxy request
   }
   
   // Get container name for user
   const container = await getUserContainer(username);
   if (!container) {
-    return res.status(404).json({ error: 'User not found' });
+    return next(); // Not a user, pass to next handler
   }
   
   // Get container IP
