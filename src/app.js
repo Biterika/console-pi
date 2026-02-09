@@ -8,9 +8,15 @@ const sessionsRoutes = require('./routes/sessions');
 const filesRoutes = require('./routes/files');
 const serverRoutes = require('./routes/server');
 
+// Middleware
+const containerProxy = require('./middleware/containerProxy');
+
 const app = express();
 
-// Middleware
+// Container proxy - FIRST, before body parsers (handles /:username::port/*)
+app.use(containerProxy);
+
+// Body parser
 app.use(express.json());
 
 // Static files
