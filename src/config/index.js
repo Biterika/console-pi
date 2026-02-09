@@ -22,4 +22,9 @@ module.exports = {
     template: process.env.LXC_TEMPLATE || 'beebro-base',
     containerPrefix: process.env.LXC_CONTAINER_PREFIX || 'beebro-',
   },
+  
+  proxy: {
+    url: process.env.PROXY_URL || 'https://dev-ai.beebro.com',
+    masterKey: process.env.PROXY_MASTER_KEY || '',
+  },
 };

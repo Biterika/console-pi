@@ -5,6 +5,7 @@ const { requireAdmin } = require("../middleware/auth");
 const { validateCreateUser } = require("../middleware/validate");
 const { hashPassword } = require("../services/crypto");
 const container = require("../services/container");
+const proxy = require("../services/proxy");
 const logger = require("../utils/logger");
 
 const router = express.Router();
@@ -15,7 +16,7 @@ const router = express.Router();
 router.get("/", requireAdmin, async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      "SELECT id, username, is_admin, container, created_at FROM users"
+      "SELECT id, username, is_admin, container, created_at, proxy_key FROM users"
     );
     
     res.json(rows.map(u => ({
@@ -24,6 +25,7 @@ router.get("/", requireAdmin, async (req, res) => {
       isAdmin: !!u.is_admin,
       container: u.container,
       createdAt: u.created_at,
+      proxyKey: u.proxy_key,
     })));
   } catch (err) {
     logger.error("Failed to list users:", err.message);
@@ -64,12 +66,39 @@ router.post("/", requireAdmin, validateCreateUser, async (req, res) => {
       logger.error("Failed to create FTP user:", err.message);
     }
     
+    // Create proxy API key
+    let proxyKey = null;
+    try {
+      const proxyData = await proxy.createProxyKey(username);
+      proxyKey = proxyData.key;
+      
+      // Update models.json in container with personal key
+      const modelsJson = JSON.stringify({
+        providers: {
+          "llm-proxy": {
+            baseUrl: "https://dev-ai.beebro.com",
+            apiKey: proxyKey,
+            api: "anthropic-messages",
+            models: [
+              { id: "claude-opus-4-5-20251101", name: "Claude 4.5 Opus", contextWindow: 200000, maxTokens: 16384 },
+              { id: "claude-sonnet-4-5-20250929", name: "Claude 4.5 Sonnet", contextWindow: 200000, maxTokens: 16384 },
+              { id: "claude-sonnet-4-20250514", name: "Claude 4 Sonnet", contextWindow: 200000, maxTokens: 16384 }
+            ]
+          }
+        }
+      });
+      execSync(`lxc exec ${containerName} -- bash -c 'mkdir -p /root/.pi/agent && echo ${JSON.stringify(modelsJson)} > /root/.pi/agent/models.json'`, { timeout: 10000 });
+      logger.info(`Proxy key created and configured for ${username}`);
+    } catch (err) {
+      logger.error("Failed to create proxy key:", err.message);
+    }
+    
     // Hash password and create user in DB
     const hashedPassword = await hashPassword(password);
     
     const [result] = await pool.execute(
-      "INSERT INTO users (username, password, is_admin, container) VALUES (?, ?, ?, ?)",
-      [username, hashedPassword, !!isAdmin, containerName]
+      "INSERT INTO users (username, password, is_admin, container, proxy_key) VALUES (?, ?, ?, ?, ?)",
+      [username, hashedPassword, !!isAdmin, containerName, proxyKey]
     );
     
     logger.info(`User ${username} created with container ${containerName}`);

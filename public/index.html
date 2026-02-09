@@ -324,7 +324,7 @@
           </div>
           <div class="users-table-wrap">
             <table class="users-table">
-              <thead><tr><th>Логин</th><th>Роль</th><th>Контейнер</th><th>Создан</th><th></th></tr></thead>
+              <thead><tr><th>Логин</th><th>Роль</th><th>Контейнер</th><th>Proxy Key</th><th>Создан</th><th></th></tr></thead>
               <tbody id="usersTableBody"></tbody>
             </table>
           </div>
@@ -552,7 +552,7 @@
     async function loadUsers() {
       const res = await fetch("/api/users");
       const users = await res.json();
-      document.getElementById("usersTableBody").innerHTML = users.map(u => `<tr><td>${escapeHtml(u.username)}</td><td><span class="badge ${u.isAdmin ? "badge-admin" : "badge-user"}">${u.isAdmin ? "Админ" : "Юзер"}</span></td><td>${escapeHtml(u.container) || "-"}</td><td>${new Date(u.createdAt).toLocaleDateString()}</td><td>${u.username !== currentUser.username ? `<button class="btn btn-small btn-danger" onclick="deleteUser(${u.id})">Удалить</button>` : ""}</td></tr>`).join("");
+      document.getElementById("usersTableBody").innerHTML = users.map(u => `<tr><td>${escapeHtml(u.username)}</td><td><span class="badge ${u.isAdmin ? "badge-admin" : "badge-user"}">${u.isAdmin ? "Админ" : "Юзер"}</span></td><td>${escapeHtml(u.container) || "-"}</td><td style="font-family:monospace;font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(u.proxyKey) || ''}">${escapeHtml(u.proxyKey) || "-"}</td><td>${new Date(u.createdAt).toLocaleDateString()}</td><td>${u.username !== currentUser.username ? `<button class="btn btn-small btn-danger" onclick="deleteUser(${u.id})">Удалить</button>` : ""}</td></tr>`).join("");
     }
 
     async function createUser() {
