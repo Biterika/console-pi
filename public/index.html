@@ -434,11 +434,11 @@
       // Desktop list
       const list = document.getElementById("sessionsList");
       if (!sessions.length) { list.innerHTML = "<div class=\"no-sessions\">Нет сессий</div>"; }
-      else { list.innerHTML = sessions.map(s => `<div class="session-item ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}')" ondblclick="event.stopPropagation();renameSession('${s.id}')"><span>${s.name}</span><button class="session-close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</button></div>`).join(""); }
+      else { list.innerHTML = sessions.map(s => `<div class="session-item ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}')" ondblclick="event.stopPropagation();renameSession('${s.id}')"><span>${escapeHtml(s.name)}</span><button class="session-close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</button></div>`).join(""); }
       
       // Mobile bar
       const bar = document.getElementById("sessionsBar");
-      bar.innerHTML = sessions.map(s => `<div class="session-chip ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}')" ondblclick="event.stopPropagation();renameSession('${s.id}')"><span>${s.name}</span><span class="close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</span></div>`).join("") + `<button class="add-session-btn" onclick="createSession()">+ Новая</button>`;
+      bar.innerHTML = sessions.map(s => `<div class="session-chip ${s.id === activeSessionId ? "active" : ""}" onclick="switchSession('${s.id}')" ondblclick="event.stopPropagation();renameSession('${s.id}')"><span>${escapeHtml(s.name)}</span><span class="close" onclick="event.stopPropagation();deleteSession('${s.id}')">&times;</span></div>`).join("") + `<button class="add-session-btn" onclick="createSession()">+ Новая</button>`;
     }
 
     function createSession() {
@@ -521,7 +521,7 @@
       try {
         const res = await fetch(`/api/files?path=${encodeURIComponent(currentPath)}`, { headers: { Authorization: "Bearer " + authToken } });
         const data = await res.json(); const files = data.files || [];
-        document.getElementById("fileList").innerHTML = files.map(f => `<div class="file-item" onclick="openFile('${f.name}',${f.isDir})"><span class="file-icon">${f.isDir ? "📁" : "📄"}</span><div class="file-info"><div class="file-name">${f.name}</div><div class="file-meta">${f.size} B</div></div></div>`).join("");
+        document.getElementById("fileList").innerHTML = files.map(f => `<div class="file-item" onclick="openFile('${escapeHtml(f.name)}',${f.isDir})"><span class="file-icon">${f.isDir ? "📁" : "📄"}</span><div class="file-info"><div class="file-name">${escapeHtml(f.name)}</div><div class="file-meta">${f.size} B</div></div></div>`).join("");
       } catch { document.getElementById("fileList").innerHTML = "<p>Ошибка загрузки</p>"; }
     }
 
@@ -554,7 +554,7 @@
     async function loadUsers() {
       const res = await fetch("/api/users");
       const users = await res.json();
-      document.getElementById("usersTableBody").innerHTML = users.map(u => `<tr><td>${u.username}</td><td><span class="badge ${u.isAdmin ? "badge-admin" : "badge-user"}">${u.isAdmin ? "Админ" : "Юзер"}</span></td><td>${u.container || "-"}</td><td>${new Date(u.createdAt).toLocaleDateString()}</td><td>${u.username !== currentUser.username ? `<button class="btn btn-small btn-danger" onclick="deleteUser(${u.id})">Удалить</button>` : ""}</td></tr>`).join("");
+      document.getElementById("usersTableBody").innerHTML = users.map(u => `<tr><td>${escapeHtml(u.username)}</td><td><span class="badge ${u.isAdmin ? "badge-admin" : "badge-user"}">${u.isAdmin ? "Админ" : "Юзер"}</span></td><td>${escapeHtml(u.container) || "-"}</td><td>${new Date(u.createdAt).toLocaleDateString()}</td><td>${u.username !== currentUser.username ? `<button class="btn btn-small btn-danger" onclick="deleteUser(${u.id})">Удалить</button>` : ""}</td></tr>`).join("");
     }
 
     async function createUser() {
@@ -584,13 +584,13 @@
       try {
         const res = await fetch("/api/server/containers");
         const containers = await res.json();
-        document.getElementById("containersList").innerHTML = containers.map(c => `<div class="container-item" data-name="${c.name}"><span class="container-status ${c.status.toLowerCase()}"></span><div class="container-info"><div class="container-name">${c.name}</div><div class="container-ip">${c.ip || "—"}</div><div class="container-size" id="size-${c.name}">⏳</div></div><button class="btn btn-small" onclick="showContainerSessions('${c.name}')">Сессии</button></div>`).join("");
+        document.getElementById("containersList").innerHTML = containers.map(c => `<div class="container-item" data-name="${escapeHtml(c.name)}"><span class="container-status ${c.status.toLowerCase()}"></span><div class="container-info"><div class="container-name">${escapeHtml(c.name)}</div><div class="container-ip">${c.ip || "—"}</div><div class="container-size" id="size-${escapeHtml(c.name)}">⏳</div></div><button class="btn btn-small" onclick="showContainerSessions('${escapeHtml(c.name)}')">Сессии</button></div>`).join("");
         // Load sizes async
         containers.forEach(async c => {
           try {
-            const sizeRes = await fetch(`/api/server/containers/${c.name}/size`);
+            const sizeRes = await fetch(`/api/server/containers/${escapeHtml(c.name)}/size`);
             const data = await sizeRes.json();
-            const el = document.getElementById(`size-${c.name}`);
+            const el = document.getElementById(`size-${escapeHtml(c.name)}`);
             if (el) el.textContent = formatBytes(data.size || 0);
           } catch {}
         });
@@ -602,13 +602,14 @@
       try {
         const res = await fetch(`/api/server/containers/${name}/sessions`);
         const sess = await res.json();
-        document.getElementById("modalContent").innerHTML = sess.length ? sess.map(s => `<div class="modal-session">${s.name}</div>`).join("") : "<p>Нет активных сессий</p>";
+        document.getElementById("modalContent").innerHTML = sess.length ? sess.map(s => `<div class="modal-session">${escapeHtml(s.name)}</div>`).join("") : "<p>Нет активных сессий</p>";
       } catch { document.getElementById("modalContent").innerHTML = "<p>Ошибка</p>"; }
       document.getElementById("sessionsModal").classList.remove("hidden");
     }
 
     function closeModal() { document.getElementById("sessionsModal").classList.add("hidden"); }
     function formatBytes(b) { if(b<1024)return b+" B";if(b<1048576)return(b/1024).toFixed(1)+" KB";if(b<1073741824)return(b/1048576).toFixed(1)+" MB";return(b/1073741824).toFixed(1)+" GB"; }
+    function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
     init();
   </script>

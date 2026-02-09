@@ -292,9 +292,10 @@ router.get("/download", requireAuth, (req, res) => {
   }
 });
 
-module.exports = router;
 
-// GET /api/files/raw - Read raw file (for images)
+/**
+ * GET /api/files/raw - Read raw file (for images)
+ */
 router.get("/raw", requireAuth, (req, res) => {
   const filePath = req.query.path;
   if (!filePath) {
@@ -343,3 +344,5 @@ router.get("/raw", requireAuth, (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+module.exports = router;

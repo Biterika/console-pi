@@ -99,7 +99,6 @@ router.get('/containers/:name/sessions', requireAdmin, validateContainerName, as
   }
 });
 
-module.exports = router;
 
 /**
  * GET /api/server/containers/:name/size - Get container size
@@ -112,3 +111,5 @@ router.get('/containers/:name/size', requireAdmin, validateContainerName, (req, 
     res.json({ size: 0 });
   }
 });
+
+module.exports = router;

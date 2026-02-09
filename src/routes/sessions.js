@@ -104,7 +104,6 @@ router.delete('/:id', requireAuth, validateSessionId, async (req, res) => {
   }
 });
 
-module.exports = router;
 
 /**
  * PATCH /api/sessions/:id - Rename session
@@ -128,3 +127,5 @@ router.patch("/:id", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to rename" });
   }
 });
+
+module.exports = router;
