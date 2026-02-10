@@ -10,7 +10,7 @@ async function createSession(containerName, sessionName, startPi = true) {
   await container.ensureContainerRunning(containerName);
   
   try {
-    const cmd = startPi ? `tmux new-session -d -s ${sessionName} pi` : `tmux new-session -d -s ${sessionName}`;
+    const cmd = startPi ? `TERM=xterm-256color tmux new-session -d -s ${sessionName} pi` : `TERM=xterm-256color tmux new-session -d -s ${sessionName}`;
     container.exec(containerName, cmd);
     logger.info(`Session ${sessionName} created`);
     return sessionName;
