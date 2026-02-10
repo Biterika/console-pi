@@ -7,6 +7,7 @@ const { hashPassword } = require("../services/crypto");
 const container = require("../services/container");
 const proxy = require("../services/proxy");
 const logger = require("../utils/logger");
+const config = require("../config");
 
 const router = express.Router();
 
@@ -53,7 +54,7 @@ router.post("/", requireAdmin, validateCreateUser, async (req, res) => {
     // Create container
     let containerName;
     try {
-      containerName = await container.createContainer(username);
+      containerName = await container.createContainer(config.lxc.containerPrefix + username);
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
