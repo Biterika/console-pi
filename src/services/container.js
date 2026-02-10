@@ -46,10 +46,10 @@ function exec(containerName, command) {
  * Create a new container from template
  */
 async function createContainer(containerName) {
-  logger.info(`Creating container ${containerName} from ${config.lxcTemplate}`);
+  logger.info(`Creating container ${containerName} from ${config.lxc.template}`);
   
   try {
-    execSync(`lxc copy ${config.lxcTemplate} ${containerName}`);
+    execSync(`lxc copy ${config.lxc.template} ${containerName}`);
     execSync(`lxc start ${containerName}`);
     await new Promise(resolve => setTimeout(resolve, 3000));
     logger.info(`Container ${containerName} created and started`);
